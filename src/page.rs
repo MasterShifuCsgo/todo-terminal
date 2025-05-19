@@ -1,8 +1,6 @@
 use crate::ask_option;
-use crate::hold;
 use crate::task;
-
-
+use clearscreen;
 
 use std::fs::File;
 use std::io;
@@ -22,6 +20,7 @@ impl Default for Page {
 impl Page {
     //renders the Menu screen
     pub fn render(&self) {
+        clearscreen::clear().expect("Failed to clear terminal");
         let menu: &str = "=== File operations ===
 0. Save to file
 1. Load from file
@@ -44,6 +43,9 @@ impl Page {
     }
 
     fn save_file(&self) {
+        clearscreen::clear().expect("Failed to clear terminal");
+        println!("Option: save to file");
+
         let file_name: &str = "tasks.json";
 
         let json: String = serde_json::to_string_pretty(&self.tasks).expect("Serade failed");
@@ -56,6 +58,8 @@ impl Page {
     }
 
     fn load_file(&mut self) {
+        clearscreen::clear().expect("Failed to clear terminal");
+        println!("Option: Load from file");
         println!("What is the filename of the file which to be loaded?");
 
         let mut file_name = String::new();
@@ -63,35 +67,38 @@ impl Page {
             .read_line(&mut file_name)
             .expect("File name failed to be parsed.");
 
-        let mut file: File = File::open(file_name).expect("File failed to open.");
+        let mut file: File = File::open(file_name.trim()).expect("File failed to open.");
 
         let mut json: String = String::new();
         file.read_to_string(&mut json)
             .expect("File failed to be parsed to a String");
 
-        let json = json.trim();
-        //serde_json::from
-        let vec = serde_json::to_vec(&json).expect("Failed to convert file data into a vector.");
-
-        print!("{:?}", vec);
+        let tasks: Vec<task::Task> = serde_json::from_str(&json).expect("Failed to convert json to Task vec");        
+        self.tasks = tasks;
     }
 
-    fn view_tasks(&self) {
+    fn view_tasks(&self) {        
+        clearscreen::clear().expect("Failed to clear terminal");
+        println!("Option: View existing Task");
         for (index, task) in self.tasks.iter().enumerate() {
             println!(
                 "{} === {} ===\n{}\n-------\n{}\n",
                 index, task.title, task.desc, task.is_done
             );
-        }
-
-        hold();
+        }                
     }
 
     fn create_task(&mut self) {
+        clearscreen::clear().expect("Failed to clear terminal");
+        println!("Option: Create new Task");
+
         self.tasks.push(task::Task::default());
     }
 
     fn edit_task(&mut self) {
+        clearscreen::clear().expect("Failed to clear terminal");
+        println!("Option: Edit existing Task");
+        
         if self.tasks.is_empty() {
             println!("No tasks to display");
         } else {
@@ -147,6 +154,41 @@ impl Page {
                     _ => print!("User choise does not match given selection."),
                 }
             }
+        }
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::path::Path;
+
+    #[test]
+    fn test_save_file_creates_valid_json() {
+        // Setup: create a Page and add 2 default tasks
+        let mut page = Page::default();
+        page.get_mutable_commands()[1](&mut page); // create_task
+        page.get_mutable_commands()[1](&mut page); // create_task again
+
+        // Trigger: call save_file
+        page.get_immutable_commands()[0](&page); // save_file
+
+        // Verify: read the written JSON file
+        let json_str = fs::read_to_string("tasks.json").expect("tasks.json missing");
+
+        // Parse JSON and check structure
+        let parsed: Vec<task::Task> =
+            serde_json::from_str(&json_str).expect("Failed to parse written JSON");
+
+        assert_eq!(parsed.len(), 2);
+        assert_eq!(parsed[0].title, "no title");
+        assert_eq!(parsed[1].desc, "no description");
+
+        // Cleanup
+        if Path::new("tasks.json").exists() {
+            fs::remove_file("tasks.json").unwrap();
         }
     }
 }

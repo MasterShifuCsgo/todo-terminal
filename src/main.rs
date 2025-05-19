@@ -1,6 +1,8 @@
 mod page;
 mod task;
 
+
+
 use std::io::{self, Write};
 
 fn ask_option() -> u32 {
@@ -23,7 +25,7 @@ fn hold() {
     io::stdout().flush().expect("Failed to flush stdout.");
 
     let mut user_choice = String::new();
-    io::stdin().read_line(&mut user_choice);
+    let _ = io::stdin().read_line(&mut user_choice);
 }
 
 fn main() {
@@ -40,7 +42,11 @@ fn main() {
             1 => mutable_commands[0](&mut mainpage),
             2 => mutable_commands[1](&mut mainpage),
             3 => mutable_commands[2](&mut mainpage),
-            4 => immutable_commands[1](&mainpage),
+            4 => {
+                immutable_commands[1](&mainpage);
+                println!("Waiting for user input...");
+                hold();
+            },
             _ => panic!("User choise failed to match an operation"),
         }
     }
