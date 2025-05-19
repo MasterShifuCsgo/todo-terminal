@@ -69,8 +69,9 @@ impl Page {
         file.read_to_string(&mut json)
             .expect("File failed to be parsed to a String");
 
+        let json = json.trim();
         //serde_json::from
-        let vec = serde_json::to_vec(&json);
+        let vec = serde_json::to_vec(&json).expect("Failed to convert file data into a vector.");
 
         print!("{:?}", vec);
     }
