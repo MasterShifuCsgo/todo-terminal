@@ -18,6 +18,14 @@ fn ask_option() -> u32 {
         .expect("Failed to parse user input.")
 }
 
+fn hold() {
+    print!("Waiting for user input...");
+    io::stdout().flush().expect("Failed to flush stdout.");
+
+    let mut user_choice = String::new();
+    io::stdin().read_line(&mut user_choice);
+}
+
 fn main() {
     println!("=== To-do List Terminal ===\n");
 

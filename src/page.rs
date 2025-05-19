@@ -1,9 +1,12 @@
 use crate::ask_option;
+use crate::hold;
 use crate::task;
 
-use serde::{Deserialize, Serialize};
+
+
 use std::fs::File;
 use std::io;
+use std::io::Read;
 use std::io::Write;
 
 pub struct Page {
@@ -41,7 +44,6 @@ impl Page {
     }
 
     fn save_file(&self) {
-
         let file_name: &str = "tasks.json";
 
         let json: String = serde_json::to_string_pretty(&self.tasks).expect("Serade failed");
@@ -50,10 +52,28 @@ impl Page {
         file.write_all(json.as_bytes())
             .expect("Failed writing to json file");
 
-        print!("Created {}", file_name);
+        println!("Created {}", file_name);
     }
 
-    fn load_file(&mut self) {}
+    fn load_file(&mut self) {
+        println!("What is the filename of the file which to be loaded?");
+
+        let mut file_name = String::new();
+        io::stdin()
+            .read_line(&mut file_name)
+            .expect("File name failed to be parsed.");
+
+        let mut file: File = File::open(file_name).expect("File failed to open.");
+
+        let mut json: String = String::new();
+        file.read_to_string(&mut json)
+            .expect("File failed to be parsed to a String");
+
+        //serde_json::from
+        let vec = serde_json::to_vec(&json);
+
+        print!("{:?}", vec);
+    }
 
     fn view_tasks(&self) {
         for (index, task) in self.tasks.iter().enumerate() {
@@ -62,6 +82,8 @@ impl Page {
                 index, task.title, task.desc, task.is_done
             );
         }
+
+        hold();
     }
 
     fn create_task(&mut self) {
